@@ -1,21 +1,20 @@
 package com.stegnography.algorithm;
 
-import com.stegnography.utils.Constants;
-
 public class LSBAlgorithm {
 
-	public int[][] embedding(final int[][] bufferedImage, final String message, final int offset, int width, int height)
+	public float[][] embedding( float[][] bufferedImage,  String message,  int offset, int width, int height)
 			throws Exception {
-		final int[][] image = startEmbedding(bufferedImage, message, offset, width, height);
+		 float[][] image = startEmbedding(bufferedImage, message, offset, width, height);
 		return image;
 	}
 
-	public String extract(final int[][] bufferedImage, final int startingOffset, int width, int height)
+	public String extract( float[][] bufferedImage,  int startingOffset, int width, int height)
 			throws Exception {
+		System.out.println("Applying LSB extraction");
 		byte[] decode = null;
 		try {
 			decode = decodeText(bufferedImage, startingOffset, height);
-			final String decodedMessage = new String(decode);
+			 String decodedMessage = new String(decode);
 			return decodedMessage;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -23,13 +22,13 @@ public class LSBAlgorithm {
 		return null;
 	}
 
-	private int[][] startEmbedding(int[][] image, final String text, final int offset, int width, int height)
+	private float[][] startEmbedding(float[][] image,  String text,  int offset, int width, int height)
 			throws Exception {
-		final byte msg[] = text.getBytes();
-		final byte len[] = bitConversion(msg.length);
+		 byte msg[] = text.getBytes();
+		 byte len[] = convert(msg.length);
 		try {
 			image = encodeText(image, len, offset, width, height);
-			image = encodeText(image, msg, offset + Constants.HIDDEN_MESSAGE_BIT_LENGTH, width, height);
+			image = encodeText(image, msg, offset + 32, width, height);
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -37,35 +36,39 @@ public class LSBAlgorithm {
 		return image;
 	}
 
-	private byte[] bitConversion(final int i) {
-		final byte byte3 = (byte) ((i & 0xFF000000) >>> 24);
-		final byte byte2 = (byte) ((i & 0x00FF0000) >>> 16);
-		final byte byte1 = (byte) ((i & 0x0000FF00) >>> 8);
-		final byte byte0 = (byte) ((i & 0x000000FF));
+	private byte[] convert( int number) {
+	 	 System.out.println("Converting "+number+" to 4 byte ");
+	 	 System.out.println("The unsigned right shift operator  shifts a zero into the leftmost position");
+		 byte byte3 = (byte) ((number & 0xFF000000) >>> 24);
+		 byte byte2 = (byte) ((number & 0x00FF0000) >>> 16);
+		 byte byte1 = (byte) ((number & 0x0000FF00) >>> 8);
+		 byte byte0 = (byte) ((number & 0x000000FF));
 		return (new byte[] { byte3, byte2, byte1, byte0 });
 	}
 
-	private int[][] encodeText(final int[][] image, final byte[] addition, final int offset, int width, int height)
+	private float[][] encodeText( float[][] image,  byte[] addition,  int offset, int width, int height)
 			throws Exception {
 
-		int i = offset / height;
-		int j = offset % height;
+		System.out.println("Encoding text into image");
+		int number = offset / height;
+		int temp = offset % height;
 
 		if ((width * height) >= (addition.length * 8 + offset)) {
-			for (final byte add : addition) {
+			for ( byte add : addition) {
 				for (int bit = 7; bit >= 0; --bit) {
-					final int imageValue = image[i][j];
+					 int imageValue = (int) image[number][temp];
 
 					int b = (add >>> bit) & 1;
-					final int imageNewValue = ((imageValue & 0xFFFFFFFE) | b);
+					 int imageNewValue = ((imageValue & 0xFFFFFFFE) | b);
 
-					image[i][j] = imageNewValue;
+					image[number][temp] = imageNewValue;
+					System.out.println("Converted value "+image[number][temp]+" to "+imageNewValue);
 
-					if (j < (height - 1)) {
-						++j;
+					if (temp < (height - 1)) {
+						++temp;
 					} else {
-						++i;
-						j = 0;
+						++number;
+						temp = 0;
 					}
 				}
 
@@ -77,38 +80,51 @@ public class LSBAlgorithm {
 		return image;
 	}
 
-	private byte[] decodeText(final int[][] image, final int startingOffset, int height) {
-		final int offset = startingOffset + Constants.HIDDEN_MESSAGE_BIT_LENGTH;
+	private byte[] decodeText( float[][] image,  int startingOffset, int height) {
+		 int offset = startingOffset + 32;
 		int length = 0;
 
-		for (int i = startingOffset; i < offset; ++i) {
-			final int h = i / height;
-			final int w = i % height;
+		for (int number = startingOffset; number < offset; ++number) {
+			 int h = number / height;
+			 int w = number % height;
 
-			final int imageValue = image[h][w];
+			 int imageValue = (int) image[h][w];
+			 System.out.println("Converted value "+image[h][w]+" to "+imageValue);
+
 			length = (length << 1) | (imageValue & 1);
 		}
 
 		byte[] result = new byte[length];
 
-		int i = offset / height;
-		int j = offset % height;
+		int number = offset / height;
+		int temp = offset % height;
 
 		for (int letter = 0; letter < length; ++letter) {
 			for (int bit = 7; bit >= 0; --bit) {
-				final int imageValue = image[i][j];
+				 int imageValue = (int) image[number][temp];
 
 				result[letter] = (byte) ((result[letter] << 1) | (imageValue & 1));
 
-				if (j < (height - 1)) {
-					++j;
+				if (temp < (height - 1)) {
+					++temp;
 				} else {
-					++i;
-					j = 0;
+					++number;
+					temp = 0;
 				}
 			}
 		}
 
 		return result;
+	}
+	
+	public static void test(Object object1,Object object2){
+		System.out.println(String.valueOf(object1));
+		System.out.println(String.valueOf(object2));
+	}
+	
+	public static void main(String[] args) {
+		
+		test(1, 2);
+		test("abc","def");
 	}
 }
