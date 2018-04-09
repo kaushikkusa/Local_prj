@@ -1,25 +1,32 @@
 package com.stegnography.algorithm;
 
-import java.awt.Color;
 import java.awt.image.BufferedImage;
+import java.util.ArrayList;
 import java.util.List;
 
 public class KmeansEmbedExtract {
 
 	private String ctype;
-	private String message;
+	private String message="";
+	private String outputmessage="";
+	
 	BufferedImage p;
 	private String saveFile;
 	List<Integer> inputData;
-	List<Integer> outputData;
+	List<Integer> outputData = new ArrayList<>();
 
 	public void embed(String message, List<Integer> inputData) {
 		ctype = "E";
 		this.message = message;
+		this.inputData = inputData;
+		convert();
 	}
 
 	public void extract(List<Integer> inputData) {
 		ctype = "D";
+		this.inputData = inputData;
+
+		convert();
 
 	}
 
@@ -34,9 +41,11 @@ public class KmeansEmbedExtract {
 			// for (int j = 0; j < p.getHeight(); j++) {
 
 			int color = inputData.get(i);
-			int r = color >> 16 & 0x000000FF;
-			int g = color >> 8 & 0x000000FF;
-			int b = color >> 0 & 0x000000FF;
+			int alpha = color >> 24 & 0xFF;
+
+			int r = color >> 16 & 0xFF;
+			int g = color >> 8 & 0xFF;
+			int b = color >> 0 & 0xFF;
 
 			if (ctype.equals("D")) {
 				if (r % 2 == 1) {
@@ -60,6 +69,7 @@ public class KmeansEmbedExtract {
 						pc = '*';
 					}
 					System.out.print(pc);
+					outputmessage = outputmessage+pc;
 					message = message.substring(8, message.length());
 				}
 			} else if (ctype.equals("E")) {
@@ -94,17 +104,31 @@ public class KmeansEmbedExtract {
 				}
 				count++;
 
-				int newValue = 0xff000000 | newRed << 16 | newGreen << 8 | newBlue;
+				//int newValue = 0xff000000 | newRed << 16 | newGreen << 8 | newBlue;
+
+				int newValue = combine(newRed, newGreen, newBlue, alpha);
+				System.out.println("Converted " + color + " to " + combine(newRed, newGreen, newBlue, alpha));
 				outputData.add(newValue);
 
 			}
+			
+			
 		}
+		
+		
 
 		// }
 
-		// if (ctype.equals("E")) {
-		// p.save(saveFile);
-		// }
+//		if (ctype.equals("E")) {
+//			p.save(saveFile);
+//		}
+	}
+	
+	public static int combine(int r, int g, int b, int a) {
+	    return ((a & 0xFF) << 24) |
+	            ((r & 0xFF) << 16) |
+	            ((g & 0xFF) << 8)  |
+	            ((b & 0xFF) << 0);
 	}
 
 	public String convertToBinary(String message) {
@@ -126,6 +150,7 @@ public class KmeansEmbedExtract {
 	}
 
 	public char convertBinary(String bin) {
+		System.out.println(bin);
 		int num = 0;
 		for (int i = 0; i < 8; i++) {
 			num += Math.pow(2, 7 - i) * Integer.parseInt("" + bin.charAt(i));
@@ -134,6 +159,34 @@ public class KmeansEmbedExtract {
 	}
 
 	public static void main(String[] args) {
+
+		KmeansEmbedExtract kmeansEmbed = new KmeansEmbedExtract();
+		List<Integer> inputData = new ArrayList<>();
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+		inputData.add(13945814);
+
+		kmeansEmbed.embed("thisiste", inputData);
+
+		KmeansEmbedExtract kmeansExtract = new KmeansEmbedExtract();
+
+		System.out.println(kmeansEmbed.outputData.size());
+		kmeansExtract.extract(kmeansEmbed.outputData);
+		System.out.println(kmeansExtract.outputmessage);
+
 	}
 
 }
